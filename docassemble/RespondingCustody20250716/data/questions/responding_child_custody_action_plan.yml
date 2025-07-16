@@ -1,0 +1,547 @@
+---
+include:
+  - docassemble.AssemblyLine:assembly_line.yml
+  - docassemble.AKA2JBranding:custom_organization.yml  
+  - docassemble.AKA2JBranding:aka2j_templates.yml    
+  - docassemble.AKA2JBranding:aka2j_motion_response_templates.yml    
+  - docassemble.AKA2JBranding:aka2j_mod_cust_div_templates.yml
+  - accordion_steps.yml
+---
+metadata:
+  title: >-
+    Responding in your child custody case  - action plan
+  short title: >-
+    Child custody responding
+  description: |-
+    Action plan for responding in your child custody case
+  tags:
+    - "FA-04-00-00-00"
+  authors:
+    - Alaska Court System
+  help_page_url: >-
+    https://courts.alaska.gov/shc/family/answer.htm
+  help_page_title: >-
+    Responding to a Complaint Served on You
+  allowed_courts: []
+  typical_role: "defendant"
+  al_weaver_version: "1.10.3"
+  generated_on: "2024-03-05"
+---
+code: |
+  # This controls the default country and list of states in address field questions
+  AL_DEFAULT_COUNTRY = "US"
+---
+code: |
+  # This controls the default state in address field questions
+  AL_DEFAULT_STATE = "Alaska"
+---
+code: |
+  github_repo_name =  'AnswerCustodyIssues'
+---
+
+code: |
+  interview_short_title = "Responding in child custody"
+---
+code: |
+  al_form_type = "other" 
+---
+objects:
+  - users: ALPeopleList
+---
+features:
+  css: 
+    - NoRedAsterisk.css
+# sections:
+#   - review_Responding_child_custody_action_plan: Review your answers
+---
+#################### Interview order #####################
+comment: |
+  Controls order and branching logic for questions specific to this form
+id: interview_order_Responding_child_custody_action_plan
+code: |
+  # Set the allowed courts for this interview
+  # allowed_courts = []
+  # nav.set_section("review_Responding_child_custody_action_plan")
+  # user_role = "defendant"
+  # user_ask_role = "defendant"
+  user_need = 'answer custody' 
+  # type_of_response
+  # type_of_response['default']
+  # parents_agree_documents
+  # set_progress(25)
+  # domestic_violence
+  # paternity
+  get_steps
+  interview_order_responding_child_custody_action_plan = True
+---
+###################### Main order ######################
+comment: |
+  This block includes the logic for standalone interviews.
+  Delete mandatory: True to include in another interview
+mandatory: True
+code: |
+  # al_intro_screen
+  responding_child_custody_action_plan_intro
+  interview_order_responding_child_custody_action_plan
+  # signature_date
+  # Store anonymous data for analytics / statistics
+  store_variables_snapshot(
+      persistent=True,
+      data={
+          "zip": showifdef("users[0].address.zip"),
+          "reached_interview_end": True,
+      },
+  )
+  # Responding_child_custody_action_plan_download
+  confirmation_and_download
+---
+comment: |
+  This question is used to introduce your interview. Please customize
+id: Responding_in_your_child_custody_case_action_plan - intro validation code
+continue button field: responding_child_custody_action_plan_intro
+question: |
+  Responding in your child custody case
+subquestion: |
+  This Guided Assistant asks you questions and uses your answers to build a Personal Action Plan - a list of steps to help you respond in your child custody case. Your Action Plan will include information about the Alaska court process and other resources.
+  
+  What information do you need?
+fields: 
+  - no label: type_of_response
+    datatype: checkboxes
+    choices:
+      - "The other parent started a custody case and I want to respond.": ak custody case
+      - "The other parent started a custody case, but did not give me the filed documents in the correct way.": improper service
+        help: |
+          The other parent is supposed to give you a copy by process server, or send it by certified mail/restricted delivery/return receipt. 
+      - "The other parent started a custody case in Alaska, but I think the case should be in a different state.": wrong state
+      - "2 custody cases were filed – Alaska and another state.": case in 2 states
+      - "The other parent started a custody case against me, I did not respond, and I got papers about a 'default judgment.'": default
+    none of the above: |
+      The other parent has not started a custody case yet, but wants to see if we can agree on a parenting plan and custody order.
+under: |
+  #### <i class="fa-regular fa-lightbulb"></i> Learn more ####
+  We provide information about the process in Alaska only. Look for information in other states on their [court](https://www.ncsc.org/information-and-resources/state-court-websites) and [legal aid programs'](https://lawhelp.org) websites.
+validation code: | 
+  if type_of_response['wrong state'] and type_of_response['case in 2 states']:
+    validation_error("Pick only 1 of these 2 choices, 'I think the other parent filed in the wrong state', <strong>or</strong> '2 custody cases were filed.' You cannot pick both.")
+---
+id: Have children lived in AK long enough
+css class: after
+question: |
+  Have your children lived in Alaska for at least the last 6 months?
+fields: 
+  - no label: jurisdiction
+    datatype: yesnoradio
+    css class: no-required-asterisk
+under: |
+  #### <i class="fa-regular fa-lightbulb"></i> Learn more ####
+  Why does it matter where our children live?
+  
+  The court may not have the authority to make decisions in your case if your children have not lived in Alaska long enough.   
+---
+comment: |
+  I think we do not need this question if we present choices as checkboxes at the beginning of the interview.
+id: No jurisdiction
+question: |
+  Information about jurisdiction has been added to your Action Plan
+subquestion: |
+  Generally, your children have to live in Alaska for at least the last 6 months for the Alaska courts to have the authority, called “jurisdiction,” to decide your case.
+  
+  % if jurisdiction:
+  If you think your case may be an exception, you may want to talk to a lawyer or contact the Alaska Family Law Self-Help Center.
+  % endif
+continue button field: continue_after_jurisdiction
+---
+id: Improper service choice
+question: |
+    Options
+subquestion: |
+  ${ capitalize(other_party_in_case)} is supposed to give you a copy of the paperwork filed in court by (1) process server, or (2) sending it by certified mail/restricted delivery/return receipt.  This is called “serving you.”  Information about “serving” has been added to your Action Plan.
+continue button field: improper_service
+---
+id: Proper service
+question: |
+  Did ${ other_party_in_case } send you the documents to start the case one of these ways?
+subquestion: |
+  (1) A process server delivered the court papers to you or a responsible person at your home or work. Or 
+  (2) You got the court papers by certified mail, restricted delivery, return receipt and you had to sign your name to get the papers. 
+
+yesno: proper_service
+under: |
+  % if type_of_response['default']:
+  #### <i class="fa-regular fa-lightbulb"></i> Learn more
+  Before the court can enter a default judgment, ${ other_party_in_case } is supposed to give you copies of the court papers by process server or certified mail, restricted delivery, return receipt.  If ${ other_party_in_case } did not, you may be able to challenge the default.
+  % endif
+---
+code: |
+  servicetypes = [
+                 {'server': "a process server who brought the documents to you or a responsible person at your home."},
+                 {'mail': "certified mail, restricted delivery, and return receipt so that you had to sign the green postcard when you got the documents in the mail."},
+                 {'neither': "I did not get the documents either of these ways."}
+               ]
+---
+id: Military
+question: |
+  Are you in the military? 
+fields: 
+  - no label: military
+    datatype: yesnoradio
+under: |
+  #### <i class="fa-regular fa-lightbulb"></i> Learn more ####
+  Why does this matter?
+  
+  Before the court can default you, the other parent is supposed to give you copies of the Complaint and the attached documents (called “service”) by process server or certified mail.  If the other parent did not, you may be able to challenge a default judgment.  
+---
+id: Stage of default
+question: |
+  What stage of the default process are you at?
+fields: 
+  - no label: stage_of_default
+    input type: radio
+    choices:
+      - "The other parent filed a “Default Application” with the court.": application filed
+      - "The court signed an “Entry of Default” or “Default Entry” and set a “Default Hearing” but it has not happened yet.": hearing scheduled
+      - "The court held a 'Default Hearing' without me and entered a 'Default Judgment' against me.": judgment entered
+under: |
+  #### <i class="fa-regular fa-lightbulb"></i> Learn more ####
+  How do I know the stage my case is at?
+  
+  You can search for your case on the Alaska Court System website, or ask your local court.
+---
+id: date of default judgment
+question: |
+  What is the date on the default judgment?
+subquestion: |
+  Look at the last page of the order. The date is at the end.
+  
+  [FILE docassemble.AKA2JBranding:CertOfDistrib_divorce_custody.PNG, 100%, This is a screenshot of the bottom of the order with the date the court sent your order.]
+fields:
+  - "The date of your order.": final_order_date
+    datatype: date
+    max: ${ today() }
+    required: False
+    # disable if: final_order_period
+    help: |
+      This is the date in the box at the bottom of the last page.
+  - "I do not have the exact date": final_order_period
+    datatype: yesno
+    enable if: 
+      variable: final_order_date
+      is: null
+  - no label: guess_final_order_date
+    enable if: final_order_period 
+    datatype: radio
+    choices: 
+      - "It is in the last 10 days.": within 10 days
+      - "It is more than 10 days ago.": more than 10 days
+      - "I do not know": unknown
+
+continue button field: final_order_date_question
+---
+code: |
+  final_order_date_question
+
+  if (final_order_date != '' and date_difference(starting=final_order_date, ending=today()).days <= 10 ) or (defined('final_order_period') and guess_final_order_date == 'within 10 days'):
+    final_order_date_within_10_days = True    
+    final_order_date_more_than_10_days = False
+  
+  if (final_order_date != '' and date_difference(starting=final_order_date, ending=today()).days > 10 ) or (defined('final_order_period') and guess_final_order_date == 'more than 10 days'):
+    final_order_date_within_10_days = False   
+    final_order_date_more_than_10_days = True
+  
+  if (defined('final_order_period') and guess_final_order_date == 'unknown'):
+    final_order_date_within_10_days = False  
+    final_order_date_more_than_10_days = False
+---
+id: Answer forms
+question: |
+  Do you want more information?
+fields:
+  - I want to: continue_for_answer
+    input type: radio
+    choices:
+      - Quit and get my Action Plan: quit
+      - Get the information I need to fill out an Answer in my case.: continue 
+---
+id: Step 4 Q. 1 Info on agree
+question: |
+  Do you want your Action Plan to include information about the documents to use if you reach an agreement with the other parent?
+subquestion: 
+  Information about talking to the other parent about agreeing on a parenting plan and custody order has been added to your Action Plan.
+fields: 
+  - no label: agreement_documents
+    datatype: yesnoradio
+---
+id: Step 5, Q2 No agree - want info on agreeing?
+question: |
+  Do you want your Action Plan to include information about resources to help you and your spouse reach an agreement on the issues in your case?
+fields:
+  - no label: want_help_to_agree
+    datatype: yesnoradio
+---
+id: Domestic violence
+question: |
+  Do you want your Action Plan to include information about domestic violence resources and how domestic violence
+  % if type_of_response['ak custody case'] and response_to_complaint == 'none' and not want_help_to_agree:
+  affects your case?
+  % else:
+  can affect your agreement?
+  % endif
+subquestion: |
+  If there is 
+  % if type_of_response['ak custody case'] and response_to_complaint == 'none' and not want_help_to_agree:
+  a history of 
+  % endif
+  abuse or domestic violence between you and the other parent, it may affect your case and 
+  % if type_of_response['ak custody case'] and not (response_to_complaint == 'none' and not want_help_to_agree):
+  what you can agree to in 
+  % endif
+  your parenting plan.
+
+fields:
+  - no label: domestic_violence
+    datatype: yesnoradio
+under: |
+  #### <i class="fa-regular fa-lightbulb"></i> Learn more ####
+  % if type_of_response['ak custody case'] and response_to_complaint in('agree', 'some'):
+  Sometimes a person in a relationship with domestic violence feels pressured to agree to things they do not want. And the
+  % else:
+  The 
+  % endif
+  law presumes that a parent with a "history of domestic violence" may not get custody and unsupervised visitation without completing some court-approved treatment. The parent’s domestic violence behavior needs to fit under one of the domestic violence crimes in the law. A "history of domestic violence" is defined as one incident that caused serious physical injury, or more than one incident. The court can find domestic violence based on one parent’s testimony even if there was no protective order or criminal case.
+---
+id: Agree
+question: |
+  Do you agree with everything the other parent asked for in their complaint?
+fields:
+  - no label: response_to_complaint
+    input type: radio
+    choices:
+      - I agree with everything the other parent asked for in the Complaint.: agree
+      - I agree with some of what the other parent asked for in the Complaint.: some
+      - I do not agree with what the other parent asked for in the Complaint.: none
+---
+id: Paternity
+question: |
+  Do you want your Action Plan to include information about paternity?
+subquestion: |
+  Sometimes paternity is an issue in a custody case.  
+  
+  Establishing paternity means legally determining the biological father of a child.  
+  
+  Once established, the father's name can be placed on the child's birth certificate and he has legal and financial responsibility for the child. 
+  
+  Disestablishing paternity is legally un-naming a man as the child's biological father.  
+fields:
+  - no label: paternity
+    datatype: yesnoradio
+---
+id: Cases in 2 states - still going?
+question: |
+  Is the case in the other state still going on?
+fields:
+  - no label: stage_of_other_case
+    input type: radio
+    choices:
+      - Yes.: still going
+      - No, it is over and the court in that case issued a custody order.: ended with order
+      - No, the case was closed before it was finished and the court did not issue a custody order: ended with no order
+---
+id: Ongoing
+question: |
+  One of the courts will close their case
+subquestion: |
+  Only one state court can enter a custody order and parenting plan, so one of the courts will close their case. 
+continue button field: ongoing
+---
+id: Dismiss
+question: |
+  You can file a “Motion to Dismiss” in your Alaska case
+subquestion: |
+  If the case in the other state is over and the other court issued a custody order, you can file a “Motion to Dismiss”  when you respond in your Alaska case.
+continue button field: dismiss
+---
+id: Other over
+question: |
+  You can move forward with the Alaska case
+subquestion: |
+  If the case in the other state is over and there is no custody order or parenting plan, you can move forward with the Alaska case.  
+continue button field: other_case_over  
+---
+id: fields in docx
+question: |
+  fields in docx are
+fields:
+  - "Motion for reconsideration": motion_for_reconsideration
+  - "More than one step of a kind": more_than_one_step_of_a_kind
+---
+id: info on Agree
+question: |
+  Do you want your Action Plan to include information about the documents to use if you reach an agreement with the other parent?
+subquestion: |
+  Information about talking to the other parent about agreeing on a parenting plan and custody order has been added to your Action Plan.
+fields:
+  - Do you want information about the documents to use if you agree?: agreement_documents
+    datatype: yesnoradio
+---
+id: preview Responding_child_custody_action_plan
+question: |
+  Preview your form before you sign it
+subquestion: |
+  Here is a preview of the form you will sign on the next page.   
+  
+  ${ al_court_bundle.as_pdf(key='preview') }
+
+  Click the image to open it in a new tab. Click the "Edit answers" button
+  to edit your answers.
+
+  ${ action_button_html(url_action('review_Responding_child_custody_action_plan'), label='Edit answers', color='info') }
+  
+  Remember to come back to this window to continue and sign your form.
+continue button field: Responding_child_custody_action_plan_preview_question    
+---
+code: |
+  signature_fields = []
+---
+code: |
+  # This is a placeholder for the addresses that will be searched
+  # for matching address to court. Edit if court venue is based on 
+  # a different address than the user's
+  [user.address.address for user in users.complete_elements()]
+  addresses_to_search = [user.address for user in users.complete_elements()]
+---
+id: Responding child custody action plan review screen
+event: review_Responding_child_custody_action_plan
+question: |
+  Review your answers
+review:
+  - Edit: type_of_response
+    button: |
+      **Type of response**:
+      ${ type_of_response }
+  - Edit: agreement_documents
+    button: |
+      **Parents agree documents**:
+      ${ agreement_documents }
+  - Edit: motion_for_reconsideration
+    button: |
+      **Motion for reconsideration**:
+      ${ motion_for_reconsideration }
+  - Edit: domestic_violence
+    button: |
+      **Domestic violence**:
+      ${ domestic_violence }
+  - Edit: want_help_to_agree
+    button: |
+      **Parent agreement info**:
+      ${ want_help_to_agree }
+  - Edit: type_of_response['default']
+    button: |
+      **Type of response['default']**:
+      ${ type_of_response['default'] }
+  - Edit: paternity
+    button: |
+      **Paternity**:
+      ${ paternity }
+  - Edit: proper_service
+    button: |
+      **Proper service**:
+      ${ proper_service }
+  - Edit: other_party_in_case
+    button: |
+      **Other party in case**:
+      ${ other_party_in_case }
+  - Edit: distribution_certificate_list
+    button: |
+      **Distribution certificate list**:
+      ${ distribution_certificate_list }
+  - Edit: military
+    button: |
+      **Military**:
+      ${ military }
+  - Edit: response_to_complaint
+    button: |
+      **Response to custody complaint**:
+      ${ response_to_complaint }
+  - Edit: user_need
+    button: |
+      **User need**:
+      ${ user_need }
+  - Edit: stage_of_default
+    button: |
+      **Stage of default**:
+      ${ stage_of_default }
+  - Edit: case_type
+    button: |
+      **Case type**:
+      ${ case_type }
+  - Edit: stage_of_other_case
+    button: |
+      **Stage of case**:
+      ${ stage_of_other_case }
+  - Edit: more_than_one_step_of_a_kind
+    button: |
+      **More than one step of a kind**:
+      ${ more_than_one_step_of_a_kind }
+  - Edit: image_data['text']
+    button: |
+      **Image data['text']**:
+      ${ image_data['text'] }
+  - Edit: image_data['image']
+    button: |
+      **Image data['image']**:
+      ${ image_data['image'] }
+---
+id: download Responding_child_custody_action_plan
+event: Responding_child_custody_action_plan_download
+question: |
+  All done
+subquestion: |
+  Thank you ${users}. Your form is ready to download and deliver.
+  
+  View, download and send your form below. Click the "Edit answers" button to fix any mistakes.
+
+  ${ action_button_html(url_action('review_Responding_child_custody_action_plan'), label='Edit answers', color='info') }
+  
+  
+  ${ al_user_bundle.download_list_html() }
+  
+
+  ${ al_user_bundle.send_button_html(show_editable_checkbox=True) }
+
+progress: 100
+---
+# ALDocument objects specify the metadata for each template
+objects:
+  - responding_child_custody_action_plan_attachment: ALDocument.using(title="Responding in your child custody case - Action Plan", filename="responding_child_custody_action_plan", enabled=True, has_addendum=False, suffix_to_append="")
+---
+# Bundles group the ALDocuments into separate downloads, such as for court and for the user
+objects:
+  - al_user_bundle: ALDocumentBundle.using(elements=[responding_child_custody_action_plan_attachment], filename="Responding_child_custody_action_plan", title="All forms to download for your records", enabled=True)
+  # - al_court_bundle: ALDocumentBundle.using(elements=[responding_child_custody_action_plan_attachment],  filename="Responding_child_custody_action_plan", title="All forms to deliver to court", enabled=True)
+---
+# Each attachment defines a key in an ALDocument. We use `i` as the placeholder here so the same template is 
+# used for "preview" and "final" keys, and logic in the template checks the value of 
+# `i` to show or hide the user's signature
+---
+attachment:
+  name: Responding child custody action plan
+  filename: responding_child_custody_action_plan
+  update references: True
+  variable name: responding_child_custody_action_plan_attachment[i]
+  skip undefined: True
+  docx template file: responding_child_custody_action_plan__2025-07-16.docx
+  # docx template file: dummy.docx
+  # docx template file: responding_child_custody_action_plan.docx
+  tagged pdf: True
+---
+attachment:
+  name: Responding child custody action plan
+  filename: responding_child_custody_action_plan
+  update references: True
+  variable name: docx_responding_child_custody_action_plan_attachment
+  skip undefined: True
+  docx template file: responding_child_custody_action_plan__2025-07-16.docx
+  # docx template file: dummy.docx
+  # docx template file: responding_child_custody_action_plan.docx
+  tagged pdf: True
